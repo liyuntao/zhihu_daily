@@ -257,7 +257,7 @@ a.page-btn {
 }
 @media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min--moz-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 200/100), only screen and (min-device-pixel-ratio: 2) {
   .web-logo {
-    background-image: url('/img/Web_Logo@2x.png') !important;
+    background-image: url('../images/Web_Logo.png') !important;
     -webkit-background-size: 126px 42px;
     -moz-background-size: 126px 42px;
     background-size: 126px 42px;

@@ -5,13 +5,12 @@ from django.http import HttpResponse
 from models import News
 import urllib2
 import json
-import time, datetime
+#import datetime
+from datetime import *
 
 '''
 todo list:
-request参数用法
-time处理
-垃圾的实现
+更改这垃圾的实现
 图片的防盗链机制
 '''
 
@@ -21,24 +20,28 @@ def fill_data(request):
     date = ''
     if(request.GET.has_key('date')): date = request.GET['date']
 
-    today = str(time.strftime('%Y%m%d',time.localtime(time.time())))
+    today = datetime.now().strftime('%Y%m%d')
+
     if(len(date) == 8 ):
         pass
     else:
-        date = today# 若用户传入非法参数，返回当天的日期
+        dt = datetime.now()
+        if dt.hour < 6:
+            date = get_yesterday(dt).strftime('%Y%m%d')
+        else:
+            date = today# 若用户传入非法参数，返回当天的日期
 
     news_list = News.objects.filter(date = date).order_by('-seq')
 
-    if(len(news_list) < 1):
-
+    if(len(news_list) < 1 ):
         hasData = inner_update(date)
         if(hasData):
             news_list = News.objects.filter(date = date).order_by('-seq')
         else:
             news_list = News.objects.filter(date = today).order_by('-seq')
 
-    time1 = time.strptime(date, '%Y%m%d')
-    time_str =time.strftime('%Y.%m.%d-%A',time1)
+    time1 = datetime.strptime(date, '%Y%m%d')
+    time_str = time1.strftime('%Y.%m.%d-%A')
     return render(request, 'templay.html', {'now_image_url':news_list[0].image_url,
                                             'img_source':news_list[0].image_source,
                                             'date_text': time_str,
@@ -46,19 +49,21 @@ def fill_data(request):
 
 
 def update(request):
-    date = request.GET['date']
-    inner_update(date)
-    return HttpResponse("<p>获取数据</p>")
+    if(request.GET.has_key('date')):
+        date = request.GET['date']
+        inner_update(date)
+        return HttpResponse("<p>获取指定日期数据</p>")
+    else:
+        inner_update(None)
+        return HttpResponse("<p>获取当前时间的数据 at "+datetime.now().strftime('%Y%m%d %H:%M:%S %Z')+"</p>")
 
 def inner_update(date):
     url = ''
     if(date == None):
         url = 'http://news.at.zhihu.com/api/1.2/news/latest'
     else:
-        time1 = time.strptime(date, '%Y%m%d')
-        datetime1 = datetime.datetime(*time1[:3])
-        datetime2 = datetime1 + datetime.timedelta(1)
-        date = datetime2.strftime('%Y%m%d')
+        time1 = datetime.strptime(date, '%Y%m%d')
+        date = get_tomorrow(time1).strftime('%Y%m%d')
         url = 'http://news.at.zhihu.com/api/1.2/news/before/'+date
     header = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.4 (KHTML, like Gecko) Chrome/22.0.1229.79 Safari/537.4'}
     req = urllib2.Request(url, headers = header)
@@ -86,3 +91,12 @@ def inner_update(date):
 
         new_obj.save()
     return True
+
+
+def get_yesterday(some_day):
+    a_day = timedelta(days=1)
+    return some_day - a_day
+
+def get_tomorrow(some_day):
+    a_day = timedelta(days=1)
+    return some_day + a_day
